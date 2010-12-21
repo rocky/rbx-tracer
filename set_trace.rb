@@ -55,31 +55,38 @@ class Rubinius::SetTrace
   end
 
   def self.set_trace_func(callback_method)
-    global(callback_method).start(callback_method, 1)
+    global(callback_method).set_trace_func(callback_method, 1)
   end
 
   # Startup the debugger, skipping back +offset+ frames. This lets you start
   # the debugger straight into callers method.
   #
-  def start(callback_method, offset=0)
-    @callback_method = callback_method
-    spinup_thread
-
-    # Feed info to the debugger thread!
-    locs = Rubinius::VM.backtrace(offset + 1, true)
-
-    method = Rubinius::CompiledMethod.of_sender
-
-    bp = BreakPoint.new "<start>", method, 0, 0
-    channel = Rubinius::Channel.new
-
-    @local_channel.send Rubinius::Tuple[bp, Thread.current, channel, locs]
-
-    # wait for the debugger to release us
-    channel.receive
-
-    Thread.current.set_debugger_thread @thread
-    self
+  def set_trace_func(callback_method, offset=0)
+    if callback_method
+      @callback_method = callback_method
+      @tracing = true
+      spinup_thread
+      
+      # Feed info to the debugger thread!
+      locs = Rubinius::VM.backtrace(offset + 1, true)
+      
+      method = Rubinius::CompiledMethod.of_sender
+      
+      bp = BreakPoint.new "<start>", method, 0, 0
+      channel = Rubinius::Channel.new
+      
+      @local_channel.send Rubinius::Tuple[bp, Thread.current, channel, locs]
+      
+      # wait for the debugger to release us
+      channel.receive
+      
+      Thread.current.set_debugger_thread @thread
+      self
+    else
+      puts "turning tracing off"
+      puts
+      @tracing = false
+    end
   end
 
   # Stop and wait for a debuggee thread to send us info about
@@ -129,9 +136,16 @@ class Rubinius::SetTrace
     id = nil
     classname = nil
     @callback_method.call(@event, file, line, id, binding, classname)
-    runner = Command.commands.find { |k| k.match?('step') }
-    if runner
-      runner.new(self).run ['1']
+    if @tracing
+      runner = Command.commands.find { |k| k.match?('step') }
+      if runner
+        runner.new(self).run ['1']
+      end
+    else
+      runner = Command.commands.find { |k| k.match?('continue') }
+      if runner
+        runner.new(self).run []
+      end
     end
   end
 
@@ -333,4 +347,7 @@ if __FILE__ == $0
     puts "tracer: #{event} #{file}:#{line}"
   }
   set_trace_func  meth
+  x = 1
+  y = 2
+  set_trace_func nil
 end

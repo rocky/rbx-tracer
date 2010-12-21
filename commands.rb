@@ -54,8 +54,15 @@ class Rubinius::SetTrace
       @debugger.listen(step)
     end
 
+    class Continue < Command
+      pattern "continue"
+      def run(args)
+        listen
+      end
+    end
+
     class StepInto < Command
-      pattern "s", "step"
+      pattern "step"
 
       def goto_between(exec, start, fin)
         goto = Rubinius::InstructionSet.opcodes_map[:goto]
@@ -168,5 +175,6 @@ class Rubinius::SetTrace
 
       end
     end
+
   end
 end
