@@ -1,13 +1,13 @@
 class Rubinius::SetTrace
   class BreakPoint
 
-    def self.for_ip(exec, ip, name=:anon)
+    def self.for_ip(exec, ip, name=:anon, event='line')
       line = exec.line_from_ip(ip)
 
-      BreakPoint.new(name, exec, ip, line)
+      BreakPoint.new(name, exec, ip, line, event)
     end
 
-    def initialize(descriptor, method, ip, line)
+    def initialize(descriptor, method, ip, line, event='line')
       @descriptor = descriptor
       @method = method
       @ip = ip
@@ -15,11 +15,11 @@ class Rubinius::SetTrace
       @for_step = false
       @paired_bp = nil
       @temp = false
-
+      @event = event
       @set = false
     end
 
-    attr_reader :method, :ip, :line, :paired_bp, :descriptor
+    attr_reader :descriptor, :event, :ip, :line, :method, :paired_bp
 
     def location
       "#{@method.active_path}:#{@line} (+#{ip})"

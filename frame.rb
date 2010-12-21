@@ -27,6 +27,10 @@ class Rubinius::SetTrace
       @location.line
     end
 
+    def file
+      @location.file
+    end
+
     def ip
       @location.ip
     end

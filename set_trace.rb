@@ -96,42 +96,39 @@ class Rubinius::SetTrace
       end
 
       # Wait for someone to stop
-      bp, thr, chan, locs = @local_channel.receive
+      @breakpoint, @debugee_thread, @channel, @locations = 
+        @local_channel.receive
 
       # Uncache all frames since we stopped at a new place
       @frames = []
 
-      @locations = locs
-      @breakpoint = bp
-      @debuggee_thread = thr
-      @channel = chan
-
       @current_frame = frame(0)
 
-      if bp
+      if @breakpoint
+        @event = @breakpoint.event
         # Only break out if the hit was valid
-        break if bp.hit!(locs.first)
+        break if @breakpoint.hit!(@locations.first)
       else
+        @event = 'call'
         break
       end
     end
 
-    puts
-    puts "Breakpoint: #{@current_frame.describe}"
-    show_code
+    # puts
+    # puts "Breakpoint: #{@current_frame.describe}"
+    # show_code
 
   end
 
   # call callback
   def call_callback
     line = @current_frame.line
+    file = @current_frame.file
     meth = @current_frame.method
     binding = @current_frame.binding
     id = nil
-    file = nil
     classname = nil
-    event = 'line'
-    @callback_method.call(event, file, line, id, binding, classname)
+    @callback_method.call(@event, file, line, id, binding, classname)
     runner = Command.commands.find { |k| k.match?('step') }
     if runner
       runner.new(self).run ['1']
@@ -332,9 +329,8 @@ module Kernel
 end
 
 if __FILE__ == $0
-  puts "Hi rocky"
   meth = lambda { |event, file, line, id, binding, classname|
-    puts "tracer: #{event} #{line}"
+    puts "tracer: #{event} #{file}:#{line}"
   }
   set_trace_func  meth
 end

@@ -151,7 +151,7 @@ class Rubinius::SetTrace
         exec = f.method
         ip = f.ip
 
-        bp = BreakPoint.for_ip(exec, ip)
+        bp = BreakPoint.for_ip(exec, ip, :anon, 'return')
         bp.for_step!(f.variables)
         bp.activate
 
