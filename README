@@ -1,1 +1,1 @@
-Simulate Ruby 1.8, 1.9, JRuby's set_trace_func.
+Simulate Ruby 1.8, 1.9, JRuby's set_trace_func in Rubinius.
