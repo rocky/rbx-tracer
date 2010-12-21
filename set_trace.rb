@@ -54,14 +54,15 @@ class Rubinius::SetTrace
     @global ||= new(callback_method)
   end
 
-  def self.start(callback_method)
-    global(callback_method).start(1)
+  def self.set_trace_func(callback_method)
+    global(callback_method).start(callback_method, 1)
   end
 
   # Startup the debugger, skipping back +offset+ frames. This lets you start
   # the debugger straight into callers method.
   #
   def start(callback_method, offset=0)
+    @callback_method = callback_method
     spinup_thread
 
     # Feed info to the debugger thread!
@@ -123,8 +124,15 @@ class Rubinius::SetTrace
 
   # call callback
   def call_callback
+    line = @current_frame.line
+    meth = @current_frame.method
+    binding = @current_frame.binding
+    id = nil
+    file = nil
+    classname = nil
+    event = 'line'
+    @callback_method.call(event, file, line, id, binding, classname)
     runner = Command.commands.find { |k| k.match?('step') }
-    puts "should do a @method.call(@locs) here"
     if runner
       runner.new(self).run ['1']
     end
@@ -319,12 +327,14 @@ end
 
 module Kernel
   def set_trace_func(callback_method)
-    Rubinius::SetTrace.start(callback_method)
+    Rubinius::SetTrace.set_trace_func(callback_method)
   end
 end
 
 if __FILE__ == $0
   puts "Hi rocky"
-  meth = lambda { puts "trace func called" }
+  meth = lambda { |event, file, line, id, binding, classname|
+    puts "tracer: #{event} #{line}"
+  }
   set_trace_func  meth
 end
