@@ -1,12 +1,12 @@
 class Rubinius::SetTrace
   class Frame
-    def initialize(debugger, number, loc)
+    def initialize(debugger, number, runtime_context)
       @debugger = debugger
       @number = number
-      @location = loc
+      @runtime_context = runtime_context
     end
 
-    attr_reader :number, :location
+    attr_reader :number, :runtime_context
 
     def run(code)
       eval(code, binding)
@@ -14,29 +14,29 @@ class Rubinius::SetTrace
 
     def binding
       @binding ||= Binding.setup(
-                     @location.variables,
-                     @location.method,
-                     @location.static_scope)
+                     @runtime_context.variables,
+                     @runtime_context.method,
+                     @runtime_context.static_scope)
     end
 
     def method
-      @location.method
+      @runtime_context.method
     end
 
     def line
-      @location.line
+      @runtime_context.line
     end
 
     def file
-      @location.file
+      @runtime_context.file
     end
 
     def ip
-      @location.ip
+      @runtime_context.ip
     end
 
     def variables
-      @location.variables
+      @runtime_context.variables
     end
 
     def local_variables
@@ -55,23 +55,23 @@ class Rubinius::SetTrace
         arg_str = ""
       end
 
-      loc = @location
+      context = @runtime_context
 
       if loc.is_block
         if arg_str.empty?
-          recv = "{ } in #{loc.describe_receiver}#{loc.name}"
+          recv = "{ } in #{context.describe_receiver}#{context.name}"
         else
-          recv = "{|#{arg_str}| } in #{loc.describe_receiver}#{loc.name}"
+          recv = "{|#{arg_str}| } in #{context.describe_receiver}#{context.name}"
         end
       else
         if arg_str.empty?
           recv = loc.describe
         else
-          recv = "#{loc.describe}(#{arg_str})"
+          recv = "#{context.describe}(#{arg_str})"
         end
       end
 
-      str = "#{recv} at #{loc.method.active_path}:#{loc.line} (@#{loc.ip})"
+      str = "#{recv} at #{context.method.active_path}:#{context.line} (@#{context.ip})"
     end
   end
 end

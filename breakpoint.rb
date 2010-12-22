@@ -21,12 +21,12 @@ class Rubinius::SetTrace
 
     attr_reader :descriptor, :event, :ip, :line, :method, :paired_bp
 
-    def location
+    def runtime_context
       "#{@method.active_path}:#{@line} (+#{ip})"
     end
 
     def describe
-      "#{descriptor} - #{location}"
+      "#{descriptor} - #{runtime_context}"
     end
 
     def for_step!(scope)
@@ -82,7 +82,7 @@ end
 if __FILE__ == $0
   method = Rubinius::CompiledMethod.of_sender
   bp = Rubinius::SetTrace::BreakPoint.new '<start>', method, 1, 2
-  %w(describe location).each do |field|
+  %w(describe runtime_context).each do |field|
     puts "#{field}: #{bp.send(field.to_sym)}"
   end
 end

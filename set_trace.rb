@@ -47,7 +47,7 @@ class Rubinius::SetTrace
   end
 
   attr_reader :variables, :current_frame, :breakpoints, :user_variables
-  attr_reader :locations
+  attr_reader :runtime_contexts
 
   def self.global(callback_method)
     # FIXME: if @global is set, we need to *change* method.
@@ -65,17 +65,20 @@ class Rubinius::SetTrace
     if callback_method
       @callback_method = callback_method
       @tracing = true
+      @step_cmd = Command.commands['step']
+      @continue_cmd = Command.commands['continue']
       spinup_thread
       
       # Feed info to the debugger thread!
-      locs = Rubinius::VM.backtrace(offset + 1, true)
+      runtime_contexts = Rubinius::VM.backtrace(offset + 1, true)
       
       method = Rubinius::CompiledMethod.of_sender
       
       bp = BreakPoint.new "<start>", method, 0, 0
       channel = Rubinius::Channel.new
       
-      @local_channel.send Rubinius::Tuple[bp, Thread.current, channel, locs]
+      @local_channel.send Rubinius::Tuple[bp, Thread.current, channel, 
+                                          runtime_contexts]
       
       # wait for the debugger to release us
       channel.receive
@@ -103,7 +106,7 @@ class Rubinius::SetTrace
       end
 
       # Wait for someone to stop
-      @breakpoint, @debugee_thread, @channel, @locations = 
+      @breakpoint, @debugee_thread, @channel, @runtime_contexts = 
         @local_channel.receive
 
       # Uncache all frames since we stopped at a new place
@@ -114,7 +117,7 @@ class Rubinius::SetTrace
       if @breakpoint
         @event = @breakpoint.event
         # Only break out if the hit was valid
-        break if @breakpoint.hit!(@locations.first)
+        break if @breakpoint.hit!(@runtime_contexts.first)
       else
         @event = 'call'
         break
@@ -137,62 +140,14 @@ class Rubinius::SetTrace
     classname = nil
     @callback_method.call(@event, file, line, id, binding, classname)
     if @tracing
-      runner = Command.commands.find { |k| k.match?('step') }
-      if runner
-        runner.new(self).run ['1']
-      end
+      @step_cmd.new(self).run
     else
-      runner = Command.commands.find { |k| k.match?('continue') }
-      if runner
-        runner.new(self).run []
-      end
+      @continue_cmd.new(self).run
     end
   end
 
   def frame(num)
-    @frames[num] ||= Frame.new(self, num, @locations[num])
-  end
-
-  def set_frame(num)
-    @current_frame = frame(num)
-  end
-
-  def each_frame(start=0)
-    start = start.number if start.kind_of?(Frame)
-
-    start.upto(@locations.size-1) do |idx|
-      yield frame(idx)
-    end
-  end
-
-  def set_breakpoint_method(descriptor, method, line=nil)
-    exec = method.executable
-
-    unless exec.kind_of?(Rubinius::CompiledMethod)
-      STDERR.puts "Unsupported method type: #{exec.class}"
-      return
-    end
-
-    if line
-      ip = exec.first_ip_on_line(line)
-
-      if ip == -1
-        STDERR.puts "Unknown line '#{line}' in method '#{method.name}'"
-        return
-      end
-    else
-      line = exec.first_line
-      ip = 0
-    end
-
-    bp = BreakPoint.new(descriptor, exec, ip, line)
-    bp.activate
-
-    @breakpoints << bp
-
-    puts "Set breakpoint #{@breakpoints.size}: #{bp.location}"
-
-    return bp
+    @frames[num] ||= Frame.new(self, num, @runtime_contexts[num])
   end
 
   def delete_breakpoint(i)

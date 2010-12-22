@@ -1,37 +1,16 @@
 require 'breakpoint'
 
 class Rubinius::SetTrace
-  class CommandDescription
-    attr_accessor :klass, :patterns, :help, :ext_help
-
-    def initialize(klass)
-      @klass = klass
-    end
-
-    def name
-      @klass.name
-    end
-  end
-
   class Command
 
-    @commands = []
+    @commands = {}
 
     def self.commands
       @commands
     end
 
-    def self.descriptor
-      @descriptor ||= CommandDescription.new(self)
-    end
-
-    def self.pattern(*strs)
-      Command.commands << self
-      descriptor.patterns = strs
-    end
-
-    def self.match?(cmd)
-      descriptor.patterns.include?(cmd)
+    def self.name(name)
+      Command.commands[name] = self
     end
 
     def initialize(debugger)
@@ -55,14 +34,14 @@ class Rubinius::SetTrace
     end
 
     class Continue < Command
-      pattern "continue"
-      def run(args)
+      name 'continue'
+      def run
         listen
       end
     end
 
     class StepInto < Command
-      pattern "step"
+      name 'step'
 
       def goto_between(exec, start, fin)
         goto = Rubinius::InstructionSet.opcodes_map[:goto]
@@ -165,7 +144,7 @@ class Rubinius::SetTrace
         return bp
       end
 
-      def run(args)
+      def run
         max = step_over_by(1)
 
         listen(true)
@@ -175,6 +154,5 @@ class Rubinius::SetTrace
 
       end
     end
-
   end
 end
