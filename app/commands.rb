@@ -34,13 +34,6 @@ class Rubinius::SetTrace
       @debugger.listen(step)
     end
 
-    class Continue < Command
-      name 'continue'
-      def run
-        listen
-      end
-    end
-
     class StepInto < Command
       name 'step'
 

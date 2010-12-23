@@ -144,7 +144,7 @@ class Rubinius::SetTrace
     if @tracing
       @step_cmd.new(self).run
     else
-      @continue_cmd.new(self).run
+      listen
     end
   end
 
