@@ -85,8 +85,6 @@ class Rubinius::SetTrace
       Thread.current.set_debugger_thread @thread
       self
     else
-      puts "turning tracing off"
-      puts
       @tracing = false
     end
   end

@@ -62,7 +62,7 @@ end
 
 desc 'the tests'
 Rake::TestTask.new(:'test') do |t|
-  t.test_files = FileList['test**/test-*.rb']
+  t.test_files = FileList['test/test-*.rb']
   # t.pattern = 'test/**/*test-*.rb' # instead of above
   t.verbose = true
 end
