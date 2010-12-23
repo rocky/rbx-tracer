@@ -1,22 +1,23 @@
 require 'rubygems'; require 'require_relative'
-require_relative './frame'
-require_relative './commands'
-require_relative './breakpoint'
+require_relative '../app/frame'
+require_relative '../app/commands'
+require_relative '../app/breakpoint'
 require 'compiler/iseq'
 
 #
 # A Rubinius implementation of set_trace_func.
 #
-# This debugger is wired into the debugging APIs provided by Rubinius.
-# It serves as a simple, builtin debugger that others can use as
-# an example for how to build a better debugger.
+# This code is wired into the debugging APIs provided by Rubinius.
+# It tries to isolate the complicated stepping logic as well as simulate
+# Ruby's set_trace_func.
 #
 
 class Rubinius::SetTrace
+  VERSION = '0.0.1.dev'
 
-  # Used to try and show the source for the kernel. Should
-  # mostly work, but it's a hack.
-  ROOT_DIR = File.expand_path(File.dirname(__FILE__) + "/..")
+  DEFAULT_SETTINGS = {
+    :callback_style => :classic
+  }
 
   # Create a new debugger object. The debugger starts up a thread
   # which is where the command line interface executes from. Other
@@ -24,7 +25,8 @@ class Rubinius::SetTrace
   # thread is the debugger thread. This is how the debugger is handed
   # control of execution.
   #
-  def initialize(meth=nil)
+  def initialize(opts={})
+    @opts = DEFAULT_SETTINGS.merge(opts)
     @file_lines = Hash.new do |hash, path|
       if File.exists? path
         hash[path] = File.readlines(path)
@@ -38,39 +40,36 @@ class Rubinius::SetTrace
       end
     end
 
-    @meth = meth
     @thread = nil
     @frames = []
     @user_variables = 0
     @breakpoints = []
-    @root_dir = ROOT_DIR
   end
 
   attr_reader :variables, :current_frame, :breakpoints, :user_variables
   attr_reader :vm_locations
 
-  def self.global(callback_method)
-    # FIXME: if @global is set, we need to *change* method.
-    @global ||= new(callback_method)
+  def self.global(opts={})
+    @global ||= new
   end
 
   def self.set_trace_func(callback_method)
-    global(callback_method).set_trace_func(callback_method, 1)
+    global.set_trace_func(callback_method, 1)
   end
 
   # Startup the debugger, skipping back +offset+ frames. This lets you start
   # the debugger straight into callers method.
   #
-  def set_trace_func(callback_method, offset=0)
+  def set_trace_func(callback_method, call_offset=0)
     if callback_method
       @callback_method = callback_method
-      @tracing = true
+      @tracing  = true
       @step_cmd = Command.commands['step']
       @continue_cmd = Command.commands['continue']
       spinup_thread
       
       # Feed info to the debugger thread!
-      vm_locations = Rubinius::VM.backtrace(offset + 1, true)
+      vm_locations = Rubinius::VM.backtrace(call_offset + 1, true)
       
       method = Rubinius::CompiledMethod.of_sender
       
@@ -132,13 +131,18 @@ class Rubinius::SetTrace
 
   # call callback
   def call_callback
-    line = @current_frame.line
-    file = @current_frame.file
-    meth = @current_frame.method
-    binding = @current_frame.binding
-    id = nil
-    classname = nil
-    @callback_method.call(@event, file, line, id, binding, classname)
+    case @opts[:callback_style]
+    when :classic
+      line = @current_frame.line
+      file = @current_frame.file
+      meth = @current_frame.method
+      binding = @current_frame.binding
+      id = nil
+      classname = nil
+      @callback_method.call(@event, file, line, id, binding, classname)
+    else
+      @callback_method.call(@event, @locs)
+    end
     if @tracing
       @step_cmd.new(self).run
     else
@@ -164,9 +168,9 @@ class Rubinius::SetTrace
   end
 
   def send_between(exec, start, fin)
-    ss   = Rubinius::InstructionSet.opcodes_map[:send_stack]
-    sm   = Rubinius::InstructionSet.opcodes_map[:send_method]
-    sb   = Rubinius::InstructionSet.opcodes_map[:send_stack_with_block]
+    ss = Rubinius::InstructionSet.opcodes_map[:send_stack]
+    sm = Rubinius::InstructionSet.opcodes_map[:send_method]
+    sb = Rubinius::InstructionSet.opcodes_map[:send_stack_with_block]
 
     iseq = exec.iseq
 

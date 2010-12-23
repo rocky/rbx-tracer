@@ -1,4 +1,5 @@
-require 'breakpoint'
+require 'rubygems'; require 'require_relative'
+require_relative './breakpoint'
 
 class Rubinius::SetTrace
   class Command

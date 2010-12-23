@@ -1,0 +1,37 @@
+2010-12-23  rocky <rockyb@rubyforge.org>
+
+	* breakpoint.rb, frame.rb, set_trace.rb: runtime_context ->
+	vm_location
+
+2010-12-22  rocky <rockyb@rubyforge.org>
+
+	* breakpoint.rb, commands.rb, frame.rb, set_trace.rb: Remove more
+	(but not all) of the "command"-ness for step/continue that is not
+	needed in set_trace_func. location -> runtime_context.
+
+2010-12-21  rocky <rockyb@rubyforge.org>
+
+	* commands.rb, set_trace.rb: Handle set_trace_func nil.
+
+2010-12-21  rocky <rockyb@rubyforge.org>
+
+	* breakpoint.rb, commands.rb, frame.rb, set_trace.rb: Set call and
+	return events
+
+2010-12-21  rocky <rockyb@rubyforge.org>
+
+	* set_trace.rb: Closer to having all of the set_trace_func
+	parameters filled in.
+
+2010-12-21  rocky <rockyb@rubyforge.org>
+
+	* README: See above
+
+2010-12-21  rocky <rockyb@rubyforge.org>
+
+	* README: What we're about. github suggests this.
+
+2010-12-20  rvm <rocky-rvm@static-71-183-236-17.nycmny.fios.verizon.net>
+
+	* First Hope (of sometine useful).
+

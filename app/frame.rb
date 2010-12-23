@@ -14,9 +14,9 @@ class Rubinius::SetTrace
 
     def binding
       @binding ||= Binding.setup(
-                     @vm_location.variables,
-                     @vm_location.method,
-                     @vm_location.static_scope)
+                                 @vm_location.variables,
+                                 @vm_location.method,
+                                 @vm_location.static_scope)
     end
 
     def method
