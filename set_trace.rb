@@ -47,7 +47,7 @@ class Rubinius::SetTrace
   end
 
   attr_reader :variables, :current_frame, :breakpoints, :user_variables
-  attr_reader :runtime_contexts
+  attr_reader :vm_locations
 
   def self.global(callback_method)
     # FIXME: if @global is set, we need to *change* method.
@@ -70,7 +70,7 @@ class Rubinius::SetTrace
       spinup_thread
       
       # Feed info to the debugger thread!
-      runtime_contexts = Rubinius::VM.backtrace(offset + 1, true)
+      vm_locations = Rubinius::VM.backtrace(offset + 1, true)
       
       method = Rubinius::CompiledMethod.of_sender
       
@@ -78,7 +78,7 @@ class Rubinius::SetTrace
       channel = Rubinius::Channel.new
       
       @local_channel.send Rubinius::Tuple[bp, Thread.current, channel, 
-                                          runtime_contexts]
+                                          vm_locations]
       
       # wait for the debugger to release us
       channel.receive
@@ -106,7 +106,7 @@ class Rubinius::SetTrace
       end
 
       # Wait for someone to stop
-      @breakpoint, @debugee_thread, @channel, @runtime_contexts = 
+      @breakpoint, @debugee_thread, @channel, @vm_locations = 
         @local_channel.receive
 
       # Uncache all frames since we stopped at a new place
@@ -117,7 +117,7 @@ class Rubinius::SetTrace
       if @breakpoint
         @event = @breakpoint.event
         # Only break out if the hit was valid
-        break if @breakpoint.hit!(@runtime_contexts.first)
+        break if @breakpoint.hit!(@vm_locations.first)
       else
         @event = 'call'
         break
@@ -147,7 +147,7 @@ class Rubinius::SetTrace
   end
 
   def frame(num)
-    @frames[num] ||= Frame.new(self, num, @runtime_contexts[num])
+    @frames[num] ||= Frame.new(self, num, @vm_locations[num])
   end
 
   def delete_breakpoint(i)

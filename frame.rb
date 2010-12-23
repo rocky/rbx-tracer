@@ -1,12 +1,12 @@
 class Rubinius::SetTrace
   class Frame
-    def initialize(debugger, number, runtime_context)
+    def initialize(debugger, number, vm_location)
       @debugger = debugger
       @number = number
-      @runtime_context = runtime_context
+      @vm_location = vm_location
     end
 
-    attr_reader :number, :runtime_context
+    attr_reader :number, :vm_location
 
     def run(code)
       eval(code, binding)
@@ -14,29 +14,29 @@ class Rubinius::SetTrace
 
     def binding
       @binding ||= Binding.setup(
-                     @runtime_context.variables,
-                     @runtime_context.method,
-                     @runtime_context.static_scope)
+                     @vm_location.variables,
+                     @vm_location.method,
+                     @vm_location.static_scope)
     end
 
     def method
-      @runtime_context.method
+      @vm_location.method
     end
 
     def line
-      @runtime_context.line
+      @vm_location.line
     end
 
     def file
-      @runtime_context.file
+      @vm_location.file
     end
 
     def ip
-      @runtime_context.ip
+      @vm_location.ip
     end
 
     def variables
-      @runtime_context.variables
+      @vm_location.variables
     end
 
     def local_variables
@@ -55,7 +55,7 @@ class Rubinius::SetTrace
         arg_str = ""
       end
 
-      context = @runtime_context
+      context = @vm_location
 
       if loc.is_block
         if arg_str.empty?
