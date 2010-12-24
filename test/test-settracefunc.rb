@@ -14,4 +14,16 @@ class TestSetTraceFunc < Test::Unit::TestCase
     EOF
     assert_equal(false, events.empty?)
   end
+
+  def test_new_style_callback
+    events = []
+    eval <<-EOF.gsub(/^.*?: /, "")
+     1: set_trace_func(Proc.new { |event, vm_locs|
+     2:   events << [event, vm_locs]
+     3: }, {:callback_style => :new})
+     4: x = 1 + 1
+     5: set_trace_func(nil)
+    EOF
+    assert_equal(false, events.empty?)
+  end
 end

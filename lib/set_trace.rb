@@ -15,18 +15,17 @@ require 'compiler/iseq'
 class Rubinius::SetTrace
   VERSION = '0.0.1.dev'
 
-  DEFAULT_SETTINGS = {
-    :callback_style => :classic
+  DEFAULT_SET_TRACE_FUNC_OPTS = {
+    :callback_style => :classic,
+    :step_to_parent => :true
   }
 
-  # Create a new debugger object. The debugger starts up a thread
-  # which is where the command line interface executes from. Other
-  # threads that you wish to debug are told that their debugging
-  # thread is the debugger thread. This is how the debugger is handed
-  # control of execution.
+  # Create a new object. Stepping starts up a thread which is where
+  # the callback executes from. Other threads are told that their
+  # debugging thread is the stepping thread, and this control of execution
+  # is handled.
   #
-  def initialize(opts={})
-    @opts = DEFAULT_SETTINGS.merge(opts)
+  def initialize()
     @file_lines = Hash.new do |hash, path|
       if File.exists? path
         hash[path] = File.readlines(path)
@@ -53,21 +52,26 @@ class Rubinius::SetTrace
     @global ||= new
   end
 
-  def self.set_trace_func(callback_method)
-    global.set_trace_func(callback_method, 1)
+  def self.set_trace_func(callback_method, opts={})
+    opts = Rubinius::SetTrace::DEFAULT_SET_TRACE_FUNC_OPTS.merge(opts)
+    opts[:call_offset] ||= 1
+    global.set_trace_func(callback_method, opts)
   end
 
-  # Startup the debugger, skipping back +offset+ frames. This lets you start
-  # the debugger straight into callers method.
+  # Startup the stepping, skipping back +opts[:call_offset]+
+  # frames. This lets you start stepping straight into caller's
+  # method.
   #
-  def set_trace_func(callback_method, call_offset=0)
+  def set_trace_func(callback_method, opts={})
     if callback_method
+      @opts = opts
+      call_offset = @opts[:call_offset] || 0
       @callback_method = callback_method
       @tracing  = true
       spinup_thread
       
-      # Feed info to the debugger thread!
-      vm_locations = Rubinius::VM.backtrace(call_offset + 1, true)
+      # Feed info to the stepping call-back thread!
+      @vm_locations = Rubinius::VM.backtrace(call_offset + 1, true)
       
       method = Rubinius::CompiledMethod.of_sender
       
@@ -75,9 +79,9 @@ class Rubinius::SetTrace
       channel = Rubinius::Channel.new
       
       @local_channel.send Rubinius::Tuple[bp, Thread.current, channel, 
-                                          vm_locations]
+                                          @vm_locations]
       
-      # wait for the debugger to release us
+      # wait for the callback to release us
       channel.receive
       
       Thread.current.set_debugger_thread @thread
@@ -88,7 +92,7 @@ class Rubinius::SetTrace
   end
 
   # Stop and wait for a debuggee thread to send us info about
-  # stoping at a breakpoint.
+  # stopping at a breakpoint.
   #
   def listen(step_into=false)
     while true
@@ -137,10 +141,15 @@ class Rubinius::SetTrace
       classname = nil
       @callback_method.call(@event, file, line, id, binding, classname)
     else
-      @callback_method.call(@event, @locs)
+      @callback_method.call(@event, @vm_locations)
     end
     if @tracing
-      step_over_by(1)
+      if @opts[:step_to_parent] 
+        @opts[:step_to_parent] = false
+        step_to_parent 
+      else 
+        step_over_by(1)
+      end
     end
     listen
   end
@@ -291,16 +300,24 @@ class Rubinius::SetTrace
 end
 
 module Kernel
-  def set_trace_func(callback_method)
-    Rubinius::SetTrace.set_trace_func(callback_method)
+  def set_trace_func(callback_method, opts={})
+    opts = Rubinius::SetTrace::DEFAULT_SET_TRACE_FUNC_OPTS.merge(opts)
+    Rubinius::SetTrace.set_trace_func(callback_method, opts)
   end
 end
 
 if __FILE__ == $0
-  meth = lambda { |event, file, line, id, binding, classname|
-    puts "tracer: #{event} #{file}:#{line}"
-  }
-  set_trace_func  meth
+  if ARGV[0] == 'classic'
+    meth = lambda { |event, file, line, id, binding, classname|
+      puts "tracer: #{event} #{file}:#{line}"
+    }
+    set_trace_func meth
+  else
+    meth = lambda { |event, vm_locs|
+      puts "tracer: #{event} #{vm_locs[0].file}:#{vm_locs[0].line}"
+    }
+    set_trace_func(meth, {:callback_style => :new})
+  end
   x = 1
   y = 2
   set_trace_func nil
