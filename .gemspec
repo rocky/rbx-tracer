@@ -12,18 +12,12 @@ FILES = FileList[
   'NEWS',
   'Rakefile',
   'THANKS',
-  'app/*',
-  'interface/*',
-  'io/*',
   'lib/*',
   'processor/**/*.rb',
-  'test/data/**/*.cmd',
-  'test/data/**/*.right',
   'test/**/*.rb',
 ]                        
 
 Gem::Specification.new do |spec|
-  spec.add_dependency('diff-lcs') # For testing only
   spec.add_dependency('rbx-require-relative')
   spec.authors      = ['R. Bernstein']
   spec.date         = Time.now
