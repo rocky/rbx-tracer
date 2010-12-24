@@ -1,6 +1,6 @@
 require 'rubygems'; require 'require_relative'
 require_relative '../app/frame'
-require_relative '../app/commands'
+require_relative '../app/stepping'
 require_relative '../app/breakpoint'
 require 'compiler/iseq'
 
@@ -64,8 +64,6 @@ class Rubinius::SetTrace
     if callback_method
       @callback_method = callback_method
       @tracing  = true
-      @step_cmd = Command.commands['step']
-      @continue_cmd = Command.commands['continue']
       spinup_thread
       
       # Feed info to the debugger thread!
@@ -142,10 +140,9 @@ class Rubinius::SetTrace
       @callback_method.call(@event, @locs)
     end
     if @tracing
-      @step_cmd.new(self).run
-    else
-      listen
+      step_over_by(1)
     end
+    listen
   end
 
   def frame(num)
