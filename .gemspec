@@ -33,7 +33,7 @@ EOF
   spec.homepage     = 'http://wiki.github.com/rocky/rbx-tracer'
   spec.name         = 'rbx-tracer'
   spec.license      = 'MIT'
-  spec.platform     = Gem::Platform::new ['universal', 'rubinius']
+  spec.platform     = Gem::Platform::new ['universal', 'rubinius', '1.2']
   spec.require_path = 'lib'
   spec.required_ruby_version = '~> 1.8.7'
   spec.summary      = 'set_trace_func Rubinius 1.2 and above'
