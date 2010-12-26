@@ -23,7 +23,7 @@ task :gem=>:gemspec do
     sh "gem build .gemspec"
     FileUtils.mkdir_p 'pkg'
     FileUtils.mv("#{gemspec.name}-#{gemspec.version}-universal-rubinius-1.2.gem", 
-                 "pkg/#{gemspec.name}-#{gemspec.version}-universal-rubinius-1.2.")
+                 "pkg/#{gemspec.name}-#{gemspec.version}-universal-rubinius-1.2.gem")
   end
 end
 
