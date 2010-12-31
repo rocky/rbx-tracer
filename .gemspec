@@ -13,6 +13,7 @@ FILES = FileList[
   'Rakefile',
   'THANKS',
   'lib/*',
+  'app/*',
   'processor/**/*.rb',
   'test/**/*.rb',
 ]                        

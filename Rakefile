@@ -3,7 +3,7 @@
 raise RuntimeError, 'This package is for Rubinius 1.2 or 1.2.1dev only!' unless
   Object.constants.include?('Rubinius') && 
   Rubinius.constants.include?('VM') && 
-  %w(1.2 1.2.1dev).member?(Rubinius::VERSION)
+  %w(1.2 1.2.0 1.2.1dev).member?(Rubinius::VERSION)
 
 require 'rubygems'
 require 'rake/gempackagetask'
