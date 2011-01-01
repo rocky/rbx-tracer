@@ -1,3 +1,49 @@
+2010-12-31  rocky <rockyb@rubyforge.org>
+
+	* .gemspec, Rakefile: Rakefile: Add 1.2.0 in test for Rubinius
+	versions .gemspec: add app to list of directories.
+
+2010-12-26  rocky <rockyb@rubyforge.org>
+
+	* Rakefile: Messed up on package name
+
+2010-12-26  rocky <rockyb@rubyforge.org>
+
+	* .gemspec, NEWS, Rakefile, lib/set_trace.rb: Repackage for
+	universal rubinius 1.2
+
+2010-12-24  rocky <rockyb@rubyforge.org>
+
+	* .gemspec, LICENSE, NEWS, THANKS: Update THANKS
+
+2010-12-23  rocky <rockyb@rubyforge.org>
+
+	* lib/set_trace.rb, test/test-settracefunc.rb: Add new-style
+	callback which passes an Array of Rubinius::Location.
+
+2010-12-23  rocky <rockyb@rubyforge.org>
+
+	* app/commands.rb, app/stepping.rb, lib/set_trace.rb: Simplify more:
+	remove command structure. command.rb->stepping.rb
+
+2010-12-23  rocky <rockyb@rubyforge.org>
+
+	* app/commands.rb, lib/set_trace.rb: Simplify more. And more
+	simplification to come...
+
+2010-12-23  rocky <rockyb@rubyforge.org>
+
+	* .gitignore, NEWS, Rakefile, THANKS, lib/set_trace.rb,
+	test/.gitignore, test/test-settracefunc.rb: Packing administrivia.
+	Add first test. Remove debug puts.
+
+2010-12-23  rocky <rockyb@rubyforge.org>
+
+	* .gemspec, ChangeLog, LICENSE, Rakefile, app/.gitignore,
+	app/breakpoint.rb, app/commands.rb, app/frame.rb, breakpoint.rb,
+	commands.rb, frame.rb, lib/.gitignore, lib/set_trace.rb,
+	set_trace.rb: Start packaging. Add Rakefile.
+
 2010-12-23  rocky <rockyb@rubyforge.org>
 
 	* breakpoint.rb, frame.rb, set_trace.rb: runtime_context ->
