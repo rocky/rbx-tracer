@@ -1,7 +1,7 @@
 Simulate Ruby 1.8, 1.9, JRuby's set_trace_func in Rubinius.
 
-We also add back support for storing source text in SCRIPT__ which this
-constant is a hash.
+We also add back support for storing source text in global constant
+SCRIPT_LINES__ when it is it is defined to be a Hash.
 
 Example of set_trace_func
 
@@ -14,7 +14,7 @@ Example of set_trace_func
 Example of SCRIPT_LINES__
 
     require 'rubygems'; require 'script_lines'
-    SCRIPT_LINES = {}
+    SCRIPT_LINES__ = {}
     load 'foo.rb'
-    # SCRIPT_LINES should have 'foo.rb' as a key and file contents as an Array
-    # if it was loaded successfully.
+    # SCRIPT_LINES__ should have 'foo.rb' as a key and file contents as an Array
+    # if it the 'foo.rb' loaded successfully.
