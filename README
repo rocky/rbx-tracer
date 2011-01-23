@@ -1,1 +1,20 @@
 Simulate Ruby 1.8, 1.9, JRuby's set_trace_func in Rubinius.
+
+We also add back support for storing source text in SCRIPT__ which this
+constant is a hash.
+
+Example of set_trace_func
+
+    require 'rubygems'; require 'set_trace'
+    meth = lambda { |event, file, line, id, binding, classname|
+      puts "tracer: #{event} #{file}:#{line}"
+    }
+    set_trace_func meth
+
+Example of SCRIPT_LINES__
+
+    require 'rubygems'; require 'script_lines'
+    SCRIPT_LINES = {}
+    load 'foo.rb'
+    # SCRIPT_LINES should have 'foo.rb' as a key and file contents as an Array
+    # if it was loaded successfully.

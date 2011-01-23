@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+# Copyright (C) 2011 Rocky Bernstein <rockyb@rubyforge.net>
 require 'rubygems'; require 'require_relative'
 require_relative '../app/frame'
 require_relative '../app/stepping'
@@ -13,7 +15,7 @@ require 'compiler/iseq'
 #
 
 class Rubinius::SetTrace
-  VERSION = '0.0.3'
+  VERSION = '0.0.4.dev'
 
   DEFAULT_SET_TRACE_FUNC_OPTS = {
     :callback_style => :classic,
