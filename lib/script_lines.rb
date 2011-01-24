@@ -2,10 +2,18 @@
 def script_lines__(path)
   if defined?(SCRIPT_LINES__) && SCRIPT_LINES__.is_a?(Hash)
     begin
-      path += '.rb' unless File.exist?(path)
-      full_path = File.expand_path(path)
-      if File.readable?(full_path)
-        SCRIPT_LINES__[path] = File.open(full_path).readlines 
+      code_loader = Rubinius::CodeLoader.new(path)
+      begin 
+        code_loader.resolve_load_path
+        load_path = code_loader.instance_variable_get('@load_path') || 
+          File.expand_path(path)
+      rescue LoadError
+        load_path = path.dup
+      end
+      load_path = path[0...-'.rbc'.size] if path.end_with?('.rbc')
+      load_path += '.rb' unless File.exist?(load_path)
+      if File.readable?(load_path)
+        SCRIPT_LINES__[path] = File.open(load_path).readlines 
         puts "#{path} added to SCRIPT_LINES__" if $DEBUG
       end
     rescue 

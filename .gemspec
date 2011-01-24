@@ -14,7 +14,6 @@ FILES = FileList[
   'THANKS',
   'lib/*',
   'app/*',
-  'processor/**/*.rb',
   'test/**/*.rb',
 ]                        
 
