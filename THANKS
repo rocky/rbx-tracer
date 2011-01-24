@@ -1,2 +1,2 @@
-This code is a distillation of the stepping code in the Rubinius
+The stepping code is a distillation of the stepping code in the Rubinius
 reference debugger written by Evan Phoenix and Brian Ford. 
