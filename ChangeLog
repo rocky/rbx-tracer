@@ -1,3 +1,21 @@
+2011-01-24  rocky <rockyb@rubyforge.org>
+
+	* .gemspec, lib/script_lines.rb: Handle require's better.
+
+2011-01-23  rocky <rockyb@rubyforge.org>
+
+	* README: The English she is so hard for me.
+
+2011-01-23  rocky <rockyb@rubyforge.org>
+
+	* README, lib/script_lines.rb, lib/set_trace.rb,
+	test/test-script-lines.rb: Add MRI 1.8/1.9 SCRIPT_LINES__
+	compatibilty. require may be broken but load works.
+
+2011-01-01  rocky <rockyb@rubyforge.org>
+
+	* ChangeLog, NEWS, lib/set_trace.rb: Update for release
+
 2010-12-31  rocky <rockyb@rubyforge.org>
 
 	* .gemspec, Rakefile: Rakefile: Add 1.2.0 in test for Rubinius

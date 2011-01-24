@@ -1,0 +1,30 @@
+Simulate Ruby 1.8, 1.9, JRuby's set_trace_func and SCRIPT_LINES__ in Rubinius.
+
+What is Kernel#set_trace_func and constat SCRIPT_LINES__ ? 
+
+set_trace_func(proc):
+
+Establishes proc as the handler for tracing or disables tracing if the parameter is nil. 
+
+SCRIPT_LINES__: 
+
+If constant SCRIPT_LINES__ is defined and references a Hash, Ruby will store an entry containing the contents of each Ruby file it loads. The 
+key for each hash entry is the file loaded as given by __FILE__ and the value is an Array of Strings with newlines containing the file contents.
+
+Example of set_trace_func
+
+bc. 
+    require 'rubygems'; require 'set_trace'
+    meth = lambda { |event, file, line, id, binding, classname|
+      puts "tracer: #{event} #{file}:#{line}"
+    }
+    set_trace_func meth
+
+Example of SCRIPT_LINES__
+
+bc. 
+    require 'rubygems'; require 'script_lines'
+    SCRIPT_LINES__ = {}
+    load 'foo.rb'
+    # SCRIPT_LINES__ should have 'foo.rb' as a key and file contents as an Array
+    # if it the 'foo.rb' loaded successfully.

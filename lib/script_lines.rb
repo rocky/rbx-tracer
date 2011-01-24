@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+# Copyright (C) 2011 Rocky Bernstein <rockyb@rubyforge.net>
+# A Rubinius implementation of set_trace_func.
 # Compatibility with MRI 1.8 and 1.9 SCRIPT_LINES__ 
 def script_lines__(path)
   if defined?(SCRIPT_LINES__) && SCRIPT_LINES__.is_a?(Hash)

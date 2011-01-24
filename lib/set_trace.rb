@@ -15,7 +15,7 @@ require 'compiler/iseq'
 #
 
 class Rubinius::SetTrace
-  VERSION = '0.0.4.dev'
+  VERSION = '0.0.4'
 
   DEFAULT_SET_TRACE_FUNC_OPTS = {
     :callback_style => :classic,

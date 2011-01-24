@@ -6,7 +6,7 @@ require 'rubygems' unless
 require File.dirname(__FILE__) + "/lib/set_trace" 
 
 FILES = FileList[
-  'README',
+  'README.textile',
   'ChangeLog',
   'LICENSE',
   'NEWS',
