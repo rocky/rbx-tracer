@@ -1,8 +1,8 @@
-Simulate Ruby 1.8, 1.9, JRuby's _set_trace_func_ and CRIPT_LINES__ in Rubinius.
+Simulate Ruby 1.8, 1.9, JRuby's _set_trace_func_ and SCRIPT_LINES__ in Rubinius.
 
 What is method __Kernel#set_trace_func__ and constant SCRIPT_LINES___ ? 
 
-__set_trace_func(proc)__ establishes *proc* as the handler for tracing or disables tracing if the parameter is *nil*. 
+__set_trace_func(proc)__ establishes _proc_ as the handler for tracing or disables tracing if the parameter is _nil_. 
 
 if constaint __SCRIPT_LINES____ is defined and references a Hash, Ruby will store an entry containing the contents of each Ruby file it loads. The  key for each hash entry is the file loaded as given by ____FILE____ and the value is an Array of Strings with newlines containing the file contents.
 
