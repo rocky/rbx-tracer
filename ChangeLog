@@ -1,5 +1,11 @@
 2011-01-24  rocky <rockyb@rubyforge.org>
 
+	* .gemspec, ChangeLog, LICENSE, NEWS, README, README.textile,
+	lib/script_lines.rb, lib/set_trace.rb: Update doc on SCRIPT_LINES__.
+	Get ready for release.
+
+2011-01-24  rocky <rockyb@rubyforge.org>
+
 	* .gemspec, lib/script_lines.rb: Handle require's better.
 
 2011-01-23  rocky <rockyb@rubyforge.org>
