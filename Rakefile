@@ -64,7 +64,7 @@ desc 'the tests'
 Rake::TestTask.new(:'test') do |t|
   t.test_files = FileList['test/test-*.rb']
   # t.pattern = 'test/**/*test-*.rb' # instead of above
-  t.verbose = true
+  t.options = '--verbose' if $VERBOSE
 end
 
 desc 'Test everything - unit tests for now.'
