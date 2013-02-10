@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2011 Rocky Bernstein <rockyb@rubyforge.net>
+# Copyright (C) 2011, 2013 Rocky Bernstein <rockyb@rubyforge.net>
 require 'rubygems'; require 'require_relative'
 require_relative '../app/frame'
 require_relative '../app/stepping'
@@ -15,6 +15,7 @@ require 'compiler/iseq'
 #
 
 class Rubinius::SetTrace
+
   VERSION = '0.0.4'
 
   DEFAULT_SET_TRACE_FUNC_OPTS = {
@@ -77,7 +78,7 @@ class Rubinius::SetTrace
       
       method = Rubinius::CompiledMethod.of_sender
       
-      bp = BreakPoint.new "<start>", method, 0, 0
+      bp = Breakpoint.new "<start>", method, 0, 0
       channel = Rubinius::Channel.new
       
       @local_channel.send Rubinius::Tuple[bp, Thread.current, channel, 
@@ -97,6 +98,7 @@ class Rubinius::SetTrace
   # stopping at a breakpoint.
   #
   def listen(step_into=false)
+    @breakpoint = nil
     while true
       if @channel
         if step_into
@@ -113,14 +115,20 @@ class Rubinius::SetTrace
       # Uncache all frames since we stopped at a new place
       @frames = []
 
-      @current_frame = frame(0)
+      set_frame(0)
 
       if @breakpoint
-        @event = @breakpoint.event
-        # Only break out if the hit was valid
-        break if @breakpoint.hit!(@vm_locations.first)
+        # Some breakpoints are frame specific. Check for this.  hit!
+        # also removes the breakpoint if it was temporary and hit.
+        status = @breakpoint.hit!(@vm_locations.first.variables)
+        if status
+          break
+        elsif @breakpoint.enabled? && status.nil? 
+          # A permanent breakpoint. Check the condition.
+          break if @breakpoint.condition?(@current_frame.binding)
+        end
       else
-        @event = 'call'
+        @processor.remove_step_brkpt
         break
       end
     end
@@ -158,6 +166,10 @@ class Rubinius::SetTrace
 
   def frame(num)
     @frames[num] ||= Frame.new(self, num, @vm_locations[num])
+  end
+
+  def set_frame(num)
+    @current_frame = frame(num)
   end
 
   def delete_breakpoint(i)

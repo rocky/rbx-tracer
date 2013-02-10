@@ -1,73 +1,63 @@
 require 'rubygems'; require 'require_relative'
 require_relative './breakpoint'
+require_relative './iseq'
+
 
 class Rubinius::SetTrace
-  def goto_between(exec, start, fin)
-    goto = Rubinius::InstructionSet.opcodes_map[:goto]
-    git  = Rubinius::InstructionSet.opcodes_map[:goto_if_true]
-    gif  = Rubinius::InstructionSet.opcodes_map[:goto_if_false]
-    
-    iseq = exec.iseq
-    
-    i = start
-    while i < fin
-      op = iseq[i]
-      case op
-      when goto
-        return next_interesting(exec, iseq[i + 1]) # goto target
-      when git, gif
-        return [next_interesting(exec, iseq[i + 1]),
-                next_interesting(exec, i + 2)] # target and next ip
+
+  include ISeq
+
+  def stepping_initialize
+    @step_brkpts  = []
+  end
+  
+  def stepping_breakpoint_finalize
+    @step_brkpts.each do |bp| 
+      bp.remove!
+    end
+  end
+  
+  def remove_step_brkpt
+    return unless @step_bp
+    @step_brkpts = @step_brkpts.select do |bp| 
+      (bp != @step_bp) && bp.active?
+    end
+    @step_bp.remove!
+  end
+  
+  def set_breakpoints_between(meth, start_ip, fin_ip)
+    opts = {:event => 'line', :temp  => true}
+    ips = goto_between(meth, start_ip, fin_ip)
+    bps = []
+
+    if ips.kind_of? Fixnum
+      if ips == -1
+        STDERR.puts "No place to step to"
+        return nil
+      elsif ips == -2
+        bps << step_to_parent(event='line')
+        ips = []
       else
-        op = Rubinius::InstructionSet[op]
-        i += (op.arg_count + 1)
+        ips = [ips]
       end
     end
     
-    return next_interesting(exec, fin)
-  end
-  
-  def next_interesting(exec, ip)
-    pop = Rubinius::InstructionSet.opcodes_map[:pop]
     
-    if exec.iseq[ip] == pop
-      return ip + 1
+    # puts "temp ips: #{ips.inspect}" 
+    frame = current_frame
+    ips.each do |ip|
+      bp = Breakpoint.for_ip(meth, ip, opts)
+      bp.scoped!(frame.scope)
+      bp.activate
+      bps << bp
     end
-    
-    return ip
-  end
-  
-  def set_breakpoints_between(exec, start_ip, fin_ip)
-    ips = goto_between(exec, start_ip, fin_ip)
-    if ips.kind_of? Fixnum
-      ip = ips
-    else
-      one, two = ips
-      bp1 = BreakPoint.for_ip(exec, one)
-      bp2 = BreakPoint.for_ip(exec, two)
-      
-      bp1.paired_with(bp2)
-      bp2.paired_with(bp1)
-      
-      bp1.for_step!(current_frame.variables)
-      bp2.for_step!(current_frame.variables)
-      
-      bp1.activate
-      bp2.activate
-      
-      return bp1
+    @step_brkpts ||= []
+    @step_brkpts += bps
+    first_bp = bps[0]
+    bps[1..-1].each do |bp| 
+      first_bp.related_with(bp) 
     end
-    
-    if ip == -1
-      STDERR.puts "No place to step to"
-      return nil
-    end
-    
-    bp = BreakPoint.for_ip(exec, ip)
-    bp.for_step!(current_frame.variables)
-    bp.activate
-    
-    return bp
+    return first_bp
   end
   
   def step_over_by(step)
@@ -75,31 +65,47 @@ class Rubinius::SetTrace
     
     ip = -1
     
-    exec = f.method
+    meth = f.method
     possible_line = f.line + step
-    fin_ip = exec.first_ip_on_line possible_line, f.ip
+    fin_ip = meth.first_ip_on_line possible_line, f.ip
     
-    if fin_ip == -1
-      return step_to_parent
-    end
+    return step_to_parent('line') unless fin_ip
     
-    set_breakpoints_between(exec, f.ip, fin_ip)
+    set_breakpoints_between(meth, f.ip, fin_ip)
   end
   
-  def step_to_parent
-    f = frame(current_frame.number + 1)
+  def step_to_return_or_yield()
+    f = current_frame
     unless f
-      STDERR.puts "Unable to find frame to step to next"
+      msg 'Unable to find frame to finish'
       return
     end
+      
+    meth = f.method
+    fin_ip = meth.lines.last
     
-    exec = f.method
-    ip = f.ip
+    set_breakpoints_on_return_between(meth, f.next_ip, fin_ip)
+  end
+
+  def step_to_parent(event='return')
+    f = frame(current_frame.number + 1)
+    unless f
+      errmsg "Unable to find parent frame to step to next"
+      return nil 
+    end
+    meth = f.method
+    ip   = f.ip
     
-    bp = BreakPoint.for_ip(exec, ip, :anon, 'return')
-    bp.for_step!(f.variables)
+    bp = Breakpoint.for_ip(meth, ip, {:event => event, :temp => true})
+    bp.scoped!(f.scope)
     bp.activate
-    
+      
     return bp
   end
+end
+
+if __FILE__ == $0
+  method = Rubinius::CompiledMethod.of_sender
+  
+  bp = Rubinius::SetTrace::Breakpoint::for_ip(method, 0)
 end
