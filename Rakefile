@@ -5,31 +5,27 @@ raise RuntimeError, 'This package is for Rubinius!' unless
   Rubinius.constants.include?('VM') 
 
 require 'rubygems'
-require 'rake/gempackagetask'
-require 'rake/rdoctask'
-require 'rake/testtask'
 
 ROOT_DIR = File.dirname(__FILE__)
+Gemspec_filename = 'rbx-tracer.gemspec'
 
 def gemspec
-  @gemspec ||= eval(File.read('.gemspec'), binding, '.gemspec')
+  @gemspec ||= eval(File.read(Gemspec_filename), binding, Gemspec_filename)
 end
 
+require 'rubygems/package_task'
 desc "Build the gem"
 task :package=>:gem
 task :gem=>:gemspec do
   Dir.chdir(ROOT_DIR) do
-    sh "gem build .gemspec"
-    FileUtils.mkdir_p 'pkg'
-    FileUtils.mv("#{gemspec.name}-#{gemspec.version}-universal-rubinius-1.2.gem", 
-                 "pkg/#{gemspec.name}-#{gemspec.version}-universal-rubinius-1.2.gem")
+    sh "gem build #{Gemspec_filename}"
   end
 end
 
 desc "Install the gem locally"
 task :install => :gem do
   Dir.chdir(ROOT_DIR) do
-    sh %{gem install --local pkg/#{gemspec.name}-#{gemspec.version}}
+    sh %{gem install --local #{gemspec.name}}
   end
 end
 
@@ -59,12 +55,16 @@ task :ChangeLog do
   system('git log --pretty --numstat --summary | git2cl > ChangeLog')
 end
 
-desc 'the tests'
-Rake::TestTask.new(:'test') do |t|
+require 'rake/testtask'
+desc "Test everything."
+Rake::TestTask.new(:test) do |t|
   t.test_files = FileList['test/test-*.rb']
   # t.pattern = 'test/**/*test-*.rb' # instead of above
   t.options = '--verbose' if $VERBOSE
 end
+
+desc "same as test"
+task :check => :test
 
 desc 'Test everything - unit tests for now.'
 task :default => :test
@@ -73,6 +73,9 @@ desc "Run each Ruby app file in standalone mode."
 task :'check:app' do
   run_standalone_ruby_file(File.join(%W(#{ROOT_DIR} app)))
 end
+
+desc "Default action is same as 'test'."
+task :default => :test
 
 desc "Generate the gemspec"
 task :generate do
@@ -85,11 +88,10 @@ task :gemspec do
 end
 
 # ---------  RDoc Documentation ------
+require 'rdoc/task'
 desc "Generate rdoc documentation"
 Rake::RDocTask.new("rdoc") do |rdoc|
   rdoc.rdoc_dir = 'doc'
-  # rdoc.title    = "rbx-trepaning #{Rubinius::SetTrace::VERSION} Documentation"
-
   rdoc.rdoc_files.include(%w(lib/set_trace.rb app/*.rb))
 end
 
